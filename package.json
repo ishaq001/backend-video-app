@@ -1,15 +1,16 @@
 {
-	"name": "backend-app",
-	"version": "1.0.0",
-	"description": "backend video chat app for learning backend",
-	"main": "index.js",
-	"type": "module",
-	"scripts": {
-		"start": "nodemon src/index.js"
-	},
-	"author": "Ishaq",
-	"license": "ISC",
-	"devDependencies": {
-		"nodemon": "^3.1.0"
-	}
+  "name": "backend-app",
+  "version": "1.0.0",
+  "description": "backend video chat app for learning backend",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "nodemon src/index.js"
+  },
+  "author": "Ishaq",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^3.1.0",
+    "prettier": "^3.2.5"
+  }
 }
