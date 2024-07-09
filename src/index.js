@@ -7,15 +7,13 @@ dotenv.config({ path: "./env" });
 
 connectDB()
 	.then(() => {
-		() => {
-			// Listen for errors on the server
-			app.on("error", (error) => {
-				console.error("Error: " + error);
-			});
+		// Listen for errors on the server
+		app.on("error", (error) => {
+			console.error("Error: " + error);
+		});
 
-			app.listen(3000, () => {
-				console.log(`Server listening on port ${process.env.PORT}`);
-			});
-		};
+		app.listen(process.env.PORT || 8000, () => {
+			console.log(`Server listening on port ${process.env.PORT}`);
+		});
 	})
 	.catch((error) => console.error("Error: " + error));

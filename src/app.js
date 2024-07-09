@@ -16,4 +16,10 @@ app.use(express.urlencoded({ extended: true, limit: "20kb" }));
 // to store some king of file or folders like pdfs, images on the server
 app.use(express.static("public"));
 app.use(cookieParser());
+
+//routes
+import userRouter from "./routes/user.routes.js";
+
+//routes declarations
+app.use("/api/v1/users", userRouter);
 export { app };
