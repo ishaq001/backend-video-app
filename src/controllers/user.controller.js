@@ -6,9 +6,15 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 const generateAccessAndRefreshTokens = async (userId) => {
 	try {
+		console.log("Generating access credentials");
 		const user = await User.findById(userId);
-		const accessToken = user.generateAccessToken();
-		const refreshToken = user.generateRefreshToken();
+		console.log(
+			user.generateAccessToken(),
+			"HEYYYE",
+			user.generateRefreshToken()
+		);
+		const accessToken = user?.generateAccessToken();
+		const refreshToken = user?.generateRefreshToken();
 		user.refreshToken = refreshToken;
 		await user.save({ validateBeforeSave: false });
 		return { accessToken, refreshToken };
@@ -20,6 +26,7 @@ const generateAccessAndRefreshTokens = async (userId) => {
 	}
 };
 
+// SIGNUP-USER
 const registerUser = asyncHandler(async function (req, res) {
 	// get user details from frontend
 	// validation not empty
@@ -31,23 +38,16 @@ const registerUser = asyncHandler(async function (req, res) {
 	// check for user creation
 	// return res
 
-	// getting user details
 	const { email, username, fullName, password } = req.body;
-
-	// validation check
 	const checkForEmpty = [email, password, fullName, username].some(
 		(field) => field?.trim() === ""
 	);
 	if (checkForEmpty) throw new ApiError(400, "All fields are required");
-
-	// check for existing user
 	const existedUser = await User.findOne({
 		$or: [{ email }, { username }],
 	});
 	if (existedUser)
 		throw new ApiError(409, "Email or username already exists");
-
-	// check for avatar and coverImage
 	const avatarLocalPath = req.files?.avatar[0].path;
 
 	let coverImageLocalPath;
@@ -65,7 +65,6 @@ const registerUser = asyncHandler(async function (req, res) {
 	const coverImage = await uploadOnCloudinary(coverImageLocalPath);
 	if (!avatar) throw new ApiError(400, "Avatar is required");
 
-	// creae user
 	const user = await User.create({
 		fullName,
 		email,
@@ -75,7 +74,6 @@ const registerUser = asyncHandler(async function (req, res) {
 		coverImage: coverImage?.url || "",
 	});
 
-	// check for already existing user
 	const createdUser = await User.findById(user._id).select(
 		"-password -refreshToken"
 	);
@@ -108,13 +106,15 @@ const loginUser = asyncHandler(async (req, res) => {
 	const isPasswordValid = await user.isPasswordCorrect(password);
 	if (!isPasswordValid) throw new ApiError(401, "password is not valid");
 
+	console.log("USERID:", user._id);
+
 	// access and refresh token
 	const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
 		user._id
 	);
 
 	// dont send back password and refresh token to
-	const loggedInUser = await User.findById(user_id).select(
+	const loggedInUser = await User.findById(user._id).select(
 		"-password -refreshToken"
 	);
 
@@ -140,6 +140,7 @@ const loginUser = asyncHandler(async (req, res) => {
 		);
 });
 
+// LOGOUT-USER
 const logoutUser = asyncHandler(async (req, res) => {
 	const userId = req.user._id;
 	await User.findByIdAndUpdate(userId, {
