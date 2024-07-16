@@ -6,13 +6,7 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 const generateAccessAndRefreshTokens = async (userId) => {
 	try {
-		console.log("Generating access credentials");
 		const user = await User.findById(userId);
-		console.log(
-			user.generateAccessToken(),
-			"HEYYYE",
-			user.generateRefreshToken()
-		);
 		const accessToken = user?.generateAccessToken();
 		const refreshToken = user?.generateRefreshToken();
 		user.refreshToken = refreshToken;
@@ -106,8 +100,6 @@ const loginUser = asyncHandler(async (req, res) => {
 	const isPasswordValid = await user.isPasswordCorrect(password);
 	if (!isPasswordValid) throw new ApiError(401, "password is not valid");
 
-	console.log("USERID:", user._id);
-
 	// access and refresh token
 	const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
 		user._id
@@ -125,8 +117,8 @@ const loginUser = asyncHandler(async (req, res) => {
 	};
 	return res
 		.status(200)
-		.cookie("access_token", accessToken, cookiesOptions)
-		.cookie("refresh_token", refreshToken, cookiesOptions)
+		.cookie("accessToken", accessToken, cookiesOptions)
+		.cookie("refreshToken", refreshToken, cookiesOptions)
 		.json(
 			new ApiResponse(
 				200,
@@ -154,8 +146,8 @@ const logoutUser = asyncHandler(async (req, res) => {
 	};
 	return res
 		.status(200)
-		.clearCookie("access_token", cookiesOptions)
-		.clearCookie("refresh_token", cookiesOptions)
+		.clearCookie("accessTsoken", cookiesOptions)
+		.clearCookie("refreshToken", cookiesOptions)
 		.json(new ApiResponse(200, {}, "User logged out successfully"));
 });
 
