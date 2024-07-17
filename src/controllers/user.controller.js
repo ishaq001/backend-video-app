@@ -59,7 +59,7 @@ const registerUser = asyncHandler(async function (req, res) {
 	// upload to cloudinary server
 	const avatar = await uploadOnCloudinary(avatarLocalPath);
 	const coverImage = await uploadOnCloudinary(coverImageLocalPath);
-	if (!avatar) throw new ApiError(400, "Avatar is required");
+	if (!avatar) throw new ApiError(400, "Avatar not uploaded on cloudinary");
 
 	const user = await User.create({
 		fullName,
@@ -84,25 +84,18 @@ const registerUser = asyncHandler(async function (req, res) {
 
 // LOGIN-USER
 const loginUser = asyncHandler(async (req, res) => {
-	// req body > data
 	const { email, username, password } = req.body;
-
-	// username or email
 	if (!email || !username)
 		throw new ApiError(401, "username or email is required");
 
-	// find the user
 	const user = await User.findOne({
 		$or: { email, username },
 	});
-
 	if (!user) throw new ApiError(404, "user not found. Please Sign up");
 
-	// password check
 	const isPasswordValid = await user.isPasswordCorrect(password);
-	if (!isPasswordValid) throw new ApiError(401, "password is not valid");
+	if (!isPasswordValid) throw new ApiError(401, "password is not correct");
 
-	// access and refresh token
 	const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
 		user._id
 	);
@@ -112,7 +105,6 @@ const loginUser = asyncHandler(async (req, res) => {
 		"-password -refreshToken"
 	);
 
-	// send cookies
 	const cookiesOptions = {
 		httpOnly: true,
 		secure: true,
@@ -193,4 +185,99 @@ const refreshAcessToken = asyncHandler(async (req, res) => {
 	}
 });
 
-export { registerUser, loginUser, logoutUser, refreshAcessToken };
+// CHANGE-PASSWORD
+const changeCurrentPassword = asyncHandler(async (req, res) => {
+	const { password, newPassword, confirmPassword } = req.body;
+	const user = await User.findById(req.user._id);
+	if (!user) throw new ApiError(401, "Unauthorized request");
+
+	const isPasswordCorrect = user.isPasswordCorrect(password);
+	if (!isPasswordCorrect) throw new ApiError(400, "Invalid password");
+
+	if (newPassword !== confirmPassword)
+		throw new ApiError(400, "Passwords do not match");
+
+	user.password = newPassword;
+	await user.save({
+		validateBeforeSave: false,
+	});
+	return res.json(new ApiResponse(200, {}, "Password changed successfully"));
+});
+
+// GET-CURRENT-USERs
+const getCurrentUser = asyncHandler(async (req, res) => {
+	return res.json(
+		new ApiResponse(200, req.user, "Current user retrieved successfully")
+	);
+});
+
+// UPDATE-ACCOUNT-DETAILS
+const updateAccountDetails = asyncHandler(async (req, res) => {
+	const { email, fullName } = req.body;
+	if (!email || !fullName) throw new ApiError(400, "All fields are required");
+	const user = await User.findByIdAndUpdate(
+		req.user._id,
+		{
+			$set: {
+				email,
+				fullName,
+			},
+		},
+		{ new: true }
+	).select("-password");
+
+	return res.json(
+		new ApiResponse(200, user, "Account details updated successfully")
+	);
+});
+
+//UPDATE-USER-AVATAR
+const updateUserAvatar = asyncHandler(async (req, res) => {
+	const avatarLocalPath = req.file?.path;
+	if (!avatarLocalPath) throw new ApiError(400, "Avatar is required");
+	const avatar = await uploadOnCloudinary(avatarLocalPath);
+	if (!avatar) throw new ApiError(400, "Avatar not updated on cloudinary");
+
+	const user = await User.findByIdAndUpdate(
+		req.user._id,
+		{
+			$set: {
+				avatar: avatar.url,
+			},
+		},
+		{ new: true }
+	).select("-password");
+	return res.json(new ApiResponse(200, user, "Avatar updated Successfully"));
+});
+
+const updateUserCoverImg = asyncHandler(async (req, res) => {
+	const coverImageLocalPath = req.file?.path;
+	if (!coverImageLocalPath)
+		throw new ApiError(400, "Cover Image is required");
+	const coverImage = await uploadOnCloudinary(avatarLocalPath);
+	if (!avatar)
+		throw new ApiError(400, "Cover Image not updated on cloudinary");
+
+	const user = await User.findByIdAndUpdate(
+		req.user._id,
+		{
+			$set: {
+				coverImage: coverImage.url,
+			},
+		},
+		{ new: true }
+	).select("-password");
+	return res.json(
+		new ApiResponse(200, user, "Cover Image updated Successfully")
+	);
+});
+export {
+	registerUser,
+	loginUser,
+	logoutUser,
+	refreshAcessToken,
+	changeCurrentPassword,
+	getCurrentUser,
+	updateAccountDetails,
+	updateUserAvatar,
+};
